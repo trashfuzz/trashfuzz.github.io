@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="webthemez">
+    <title>TrashFuzz</title>
+	<!-- core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/font-awesome.min.css" rel="stylesheet">
+    <link href="css/animate.min.css" rel="stylesheet"> 
+    <link href="css/prettyPhoto.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet"> 
+    <!--[if lt IE 9]>
+    <script src="js/html5shiv.js"></script>
+    <script src="js/respond.min.js"></script>
+    <![endif]-->       
+    <link rel="shortcut icon" href="images/ico/favicon.ico"> 
+    <style>
+        .video {
+            width: 48%; /* Adjust this value as needed */
+            float: left;
+            margin-right: 2%; /* Adjust spacing between videos */
+        }
+    </style>
+</head> 
+
+<body id="home">
+
+    <header id="header">
+        <nav id="main-nav" class="navbar navbar-default navbar-fixed-top" role="banner">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="index.html"><h2>TrashFuzz</h2></a>
+                </div>
+				
+                <div class="collapse navbar-collapse navbar-right">
+                    <ul class="nav navbar-nav">
+                        <li class="scroll active"><a href="#home">Home</a></li> 
+						<!-- <li class="scroll"><a href="#demo">Demos</a></li>     -->
+                        <li class="scroll"><a href="#quickstart">QuickStart</a></li>   
+                        <li class="scroll"><a href="#sourcecode">SourceCode</a></li>      
+                        <li class="scroll"><a href="#specifications">Specifications</a></li>     
+                </div>
+            </div><!--/.container-->
+        </nav><!--/nav-->
+
+    </header><!--/header-->
+
+    <section id="hero-banner">
+             <div class="banner-inner">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                 
+                                    <h2><b>TrashFuzz</b> </h2>
+                                    <!-- <p>Lorem ipsum dolor sit amet, consectetur adipisici <br/> Praesent eget risus.</p> -->
+                                    <a class="btn btn-primary btn-lg" href="#quickstart">Explore Now!</a>
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    </section>
+
+
+
+    <section id="quickstart">
+         <div class="container">
+            <div class="section-header">
+                    <h2 class="section-title wow fadeInDown">Quick Start</h2>
+                    <p class="wow fadeInDown">Let's explore TrashFuzz in a quick start!</p>
+                </div>
+
+            <div class="row FeatLayout">
+                <h3 class="column-title">Step1: Run Apollo with LGSVL</h3>
+                <p>Follow the steps detailed in the <a href="https://www.svlsimulator.com/docs/archive/2020.06/apollo-master-instructions/">documentation</a> to set up Apollo+LGSVL.</p>
+                <p>Install the python API of LGSVL as shown in <a href="https://www.svlsimulator.com/docs/archive/2020.06/python-api/">here</a> and set the LGSVL to API Only Mode.</p>
+                <p>Test your installation by the following code. You should see the vehcile moving toward the destination!</p>
+<pre>
+<code>
+import os
+import lgsvl
+from environs import Env
+
+env = Env()
+
+sim = lgsvl.Simulator(
+    env.str("LGSVL__SIMULATOR_HOST", lgsvl.wise.SimulatorSettings.simulator_host),
+    env.int("LGSVL__SIMULATOR_PORT", lgsvl.wise.SimulatorSettings.simulator_port)
+)
+
+if sim.current_scene == lgsvl.wise.DefaultAssets.map_borregasave:
+    sim.reset()
+else:
+    sim.load(lgsvl.wise.DefaultAssets.map_borregasave)
+
+spawns = sim.get_spawn()
+
+state = lgsvl.AgentState()
+state.transform = spawns[0]
+
+ego = sim.add_agent(lgsvl.wise.DefaultAssets.ego_lincoln2017mkz_apollo5, lgsvl.AgentType.EGO, state)
+ego.connect_bridge(
+    env.str("LGSVL__AUTOPILOT_0_HOST", lgsvl.wise.SimulatorSettings.bridge_host),
+    env.int("LGSVL__AUTOPILOT_0_PORT", lgsvl.wise.SimulatorSettings.bridge_port)
+)
+
+# Dreamview setup
+dv = lgsvl.dreamview.Connection(sim, ego, env.str("LGSVL__AUTOPILOT_0_HOST", "127.0.0.1"))
+dv.set_hd_map('Borregas Ave')
+dv.set_vehicle('Lincoln2017MKZ')
+modules = [
+    'Localization',
+    'Perception',
+    'Transform',
+    'Routing',
+    'Prediction',
+    'Planning',
+    'Camera',
+    'Traffic Light',
+    'Control'
+]
+destination = spawns[0].destinations[0]
+dv.setup_apollo(destination.position.x, destination.position.z, modules)
+
+sim.run()
+</code>
+</pre>
+            </div>
+
+            <div class="row FeatLayout">
+                <h3 class="column-title">Step2: Add adversarial objects to LGSVL</h3>
+                <p>Open the following folder: </p>
+                <pre>
+                    <code>
+cd /root/of/the/lgsvl/AssetBundles/Controllables
+                    </code>
+                </pre>
+                <p>Download the adversarial objects assets from <a href="https://github.com/trashfuzz/Adversarial_Object_Assets.git">this link</a>, put them in the aboe folder.</p>
+                <pre>
+                    <code>
+git clone https://github.com/trashfuzz/Adversarial_Object_Assets.git
+                    </code>
+                </pre>
+
+                <p>Now run the following code to check whether we can spawn these adversarial objects! You should see a bench spawnd in front of the vehicle.</p>
+<pre>
+<code>
+import os
+import lgsvl
+
+sim = lgsvl.Simulator(os.environ.get("SIMULATOR_HOST", "127.0.0.1"), 8181)
+scene_name = "CubeTown"
+
+if sim.current_scene == scene_name:
+  sim.reset()
+else:
+  sim.load(scene_name, 42)
+
+spawns = sim.get_spawn()
+
+state = lgsvl.AgentState()
+forward = lgsvl.utils.transform_to_forward(spawns[0])
+right = lgsvl.utils.transform_to_right(spawns[0])
+up = lgsvl.utils.transform_to_up(spawns[0])
+state.transform = spawns[0]
+
+ego = sim.add_agent("Lincoln2017MKZ (Apollo 5.0)", lgsvl.AgentType.EGO, state)
+
+#place objects
+state = lgsvl.ObjectState()
+state.transform.rotation = spawns[0].rotation
+state.velocity = 0.000000001 * up
+state.angular_velocity = 0.000000001 * right
+
+start = spawns[0].position + 10 * forward
+state.transform.position = start
+
+o = sim.controllable_add("Bench0", state)
+print("Place Bench0")
+</code>
+</pre>
+        </div>
+
+        <p>We can try some test cases now!</p>   
+        <div class="row FeatLayout">
+        <h3 class="column-title">Step3: Run An Example</h3>
+            <p>Go to the folder of the SourceCode of TrashFuzz and start the bridge </p>
+                <pre>
+                    <code>
+cd /root/of/the/TrashFuzz-SourceCode/
+cd bridge
+python3 bridge_attack.py
+                    </code>
+                </pre>
+
+            <p>In another terminal, do: </p>
+                <pre>
+                    <code>
+cd /root/of/the/TrashFuzz-SourceCode/
+python3 run_single_test_case.py
+                    </code>
+                </pre>
+            <p>You should see the test case running! Below is a recorded video of this test case.</p>
+
+
+
+        </div>
+        <div class="row FeatLayout">
+            <h3>Under Normal Circumstances:</h3>
+            <div class="column-title">
+                <video id="issue1" class="video" width="560" height="380"  controls muted>
+                    <source src="LGSVLWithoutAttack.mp4" type="video/mp4">
+                </video>
+                <video id="issue2" class="video" width="560" height="380"  controls muted>
+                    <source src="ApolloWithoutAttack.mp4" type="video/mp4">
+                </video>                
+            </div>
+            <p>
+                On the left, you can see the recorded video from LGSVL, and on the right, you can see the video from Apollo. It's apparent that under normal conditions, Apollo's perception of traffic lights operates correctly, as evident around <a onclick="setVideosToSpecificTime1(17.5)">17 seconds</a>. Additionally, the traffic light module exhibits a normal delay of 0.05-0.2 seconds.
+            </p>
+
+            <button id="toggleButton">Play Videos Together</button>
+
+            <script>
+                var vid1 = document.getElementById("issue1");
+                var vid2 = document.getElementById("issue2");
+                var isPlaying = false;
+
+                function togglePlayVideos() {
+                    if (isPlaying) {
+                        vid1.pause();
+                        vid2.pause();
+                        isPlaying = false;
+                        document.getElementById('toggleButton').textContent = 'Play Videos Together';
+                    } else {
+                        vid1.play();
+                        vid2.play();
+                        isPlaying = true;
+                        document.getElementById('toggleButton').textContent = 'Stop Videos';
+                    }
+                }
+
+                function setVideosToSpecificTime1(time) {
+                    vid1.currentTime = time;
+                    vid2.currentTime = time;
+                }
+
+                var toggleButton = document.getElementById('toggleButton');
+                toggleButton.addEventListener('click', togglePlayVideos);
+            </script>
+
+        </div> 
+
+
+
+
+
+
+
+
+        <div class="row FeatLayout">
+            <h3 class="column-title">Under Attack:</h3>
+            <div class="video-container">
+                <video id="issue3" class="video" width="560" height="380"  controls muted>
+                    <source src="LGSVLAlwaysGreen.mp4" type="video/mp4">
+                </video>
+                <video id="issue4" class="video" width="560" height="380"  controls muted>
+                    <source src="ApolloAlwaysGreen.mp4" type="video/mp4">
+                </video>                
+            </div>
+            <p>
+                On the left, you can view the recorded video from LGSVL, and on the right, the video from Apollo. Before <a onclick="setVideosToSpecificTime2(10)">10 seconds</a>, the traffic light module shows a normal delay of 0.05-0.2 seconds. However, as the vehicle approaches placed adversarial objects, the traffic light module experiences an accumulated delay, revealing overload. Consequently, Apollo consistently perceives the traffic light as green, regardless of its actual color, as seen from <a onclick="setVideosToSpecificTime2(17)">17 seconds</a>. In response, Apollo adopts a more aggressive driving behavior in this scenario.   
+            </p>
+
+            <button id="toggleButton2">Play Videos Together</button>
+
+            <script>
+                var vid3 = document.getElementById("issue3");
+                var vid4 = document.getElementById("issue4");
+                var isPlaying = false;
+
+                function togglePlayVideos2() {
+                    if (isPlaying) {
+                        vid3.pause();
+                        vid4.pause();
+                        isPlaying = false;
+                        document.getElementById('toggleButton2').textContent = 'Play Videos Together';
+                    } else {
+                        vid3.play();
+                        vid4.play();
+                        isPlaying = true;
+                        document.getElementById('toggleButton2').textContent = 'Stop Videos';
+                    }
+                }
+
+                function setVideosToSpecificTime2(time) {
+                    vid3.currentTime = time;
+                    vid4.currentTime = time;
+                }
+
+                var toggleButton2 = document.getElementById('toggleButton2');
+                toggleButton2.addEventListener('click', togglePlayVideos2);
+            </script>
+
+        </div> 
+
+
+        <div class="row FeatLayout">
+            <p>This is the end of QuickStart! </p>
+            <p>Explore more interesting cases by our <a href="https://github.com/trashfuzz/TrashFuzz-SourceCode.git">greedy graident-guided fuzzing algorithm</a>!</p>
+        </div>
+
+    </section>
+
+
+    <section id="sourcecode">
+         <div class="container">
+            <div class="section-header">
+                    <h2 class="section-title wow fadeInDown">Source Code</h2>
+                    <p class="wow fadeInDown">The links to the source code.</p>
+                </div>
+
+            <div class="row FeatLayout">
+                <h2><a class="btn btn-primary btn-lg" href="https://github.com/trashfuzz/Adversarial_Object_Assets.git">The adversarial objects library</a></h2>
+                <h2><a class="btn btn-primary btn-lg" href="https://github.com/trashfuzz/TrashFuzz-SourceCode.git">The overall algorithm</a></h2>
+            </div>
+
+        </div>
+    </section>
+
+
+    <section id="specifications">
+        	 <div class="container">
+        	   <div class="section-header">
+                        <h2 class="section-title wow fadeInDown">Specifications</h2>
+                        <p class="wow fadeInDown">The specification we use in our experiment. Adopted from LawBreaker.</p>
+                    </div>
+
+
+           <div class="row FeatLayout">
+        <pre>
+          <code>
+...DSL description for scenario0
+Trace trace = EXE(scenario0);
+
+//law38
+//Green Lights
+law38_sub1_1 = (trafficLightAhead.color == green) & (stoplineAhead(2) | junctionAhead(2)) & ~PriorityNPCAhead & ~PriorityPedsAhead;
+law38_sub1_2 = F[0,2](speed > 0.5);
+law38_sub1 = G (law38_sub1_1 -> law38_sub1_2); 
+//Yellow Lights
+law38_sub2_1 = ((trafficLightAhead.color == yellow) & (stoplineAhead(0) | currentLane.number == 0)) -> (F[0,2] (speed > 0.5));
+law38_sub2_2 = ((trafficLightAhead.color == yellow) & stoplineAhead(3.5) & ~stoplineAhead(0.5) & currentLane.number > 0) -> (F[0,3] (speed < 0.5));
+law38_sub2 = G (law38_sub2_1 & law38_sub2_2); 
+//Red LightS
+law38_sub3_1 = ((trafficLightAhead.color == red) & (stoplineAhead(2) | junctionAhead(2)) & ~(direction == right)) -> (F[0,3] (speed < 0.5));
+law38_sub3_2 = ((trafficLightAhead.color == red) & (stoplineAhead(2) | junctionAhead(2)) & direction == right & ~PriorityNPCAhead & ~PriorityPedsAhead) -> (F[0,2] (speed > 0.5));
+law38_sub3 = G (law38_sub3_1 & law38_sub3_2); 
+law38 = law38_sub1 & law38_sub2 & law38_sub3;
+
+
+//law44
+law44_sub1 = currentLane.number >= 2;
+law44_sub2 = (speed >= speedLimit.lowerLimit) & (speed <= speedLimit.upperLimit);
+law44_sub3 = isChangingLane & currentLane.number >= 2;
+law44_sub4 = G(law44_sub1 -> law44_sub2);
+law44_sub5 = G(law44_sub3 -> ~PriorityNPCAhead);
+law44 = law44_sub4 & law44_sub5;
+
+
+//law45
+law45 = G( speed >= speedLimit.lowerLimit & speed <= speedLimit.upperLimit);
+
+
+//law46
+law_46_sub2 = G( (direction == left | direction == right | isTurningAround) -> (speed <= 30 ));
+law_46_sub3 = G( (rain >= 0.5 | fog >= 0.5 | snow >=0.5 | visibility <= 50 ) -> (speed <= 30));
+law46 = (law_46_sub2) & (law_46_sub3);
+
+//law47
+law47_sub1 = (turnSignal == left) & ((F[-1,2](hornOn)) | ((highBeamOn & (highBeamOn -> (F[0, 2](lowBeamOn)) ) ) | (lowBeamOn & (lowBeamOn -> (F[0, 2](highBeamOn)) ) ))) & (F[0, 10]( (turnSignal == right) & (((isChangingLane) -> (NearestNPC(5))) & (isChangingLane) ) ));
+law47 = G(isOverTaking -> law47_sub1);
+
+
+//law50
+law50 = G( (PriorityNPCAhead | crosswalkAhead(2)) -> ~(gear == 2) ); 
+
+
+//law51
+//turn_left
+law51_sub3_1 =(trafficLightAhead.color == green & direction == left & Time <= 20:00 & Time >= 7:00) -> (turnSignal == left);
+law51_sub3_2 =(trafficLightAhead.color == green & direction == left & (Time >= 20:00 | Time <= 7:00)) -> (turnSignal == left & lowBeamOn);
+law51_sub3 = G(law51_sub3_1 & law51_sub3_2);  
+//go_in_line_at_green
+law51_sub4_1 = trafficLightAhead.color == green & (~NPCAhead(8) | (( NPCAhead(8) -> F[0,2](NPCAhead.speed > 0.5)  ) & NPCAhead(8)));
+law51_sub4_2 = (F[0, 3](speed > 0.5)) & ~NPCAhead(0.5);
+law51_sub4 = G(law51_sub4_1 -> law51_sub4_2);
+//stop_in_line_at_red
+law51_sub5_1 = trafficLightAhead.color == red & (stoplineAhead(2) | junctionAhead(2) | NPCAhead(0.5));
+law51_sub5_2 = F[0, 2](speed < 0.5);
+law51_sub5 = G(law51_sub5_1 -> law51_sub5_2);  
+//tuen_right_stop_in_line_at_red
+law51_sub6 = G((direction == right & NPCAhead(2) & (F[0, 2](NPCAhead.speed < 0.5)) ) -> F[0, 3] (speed < 0.5));
+//priority_for_straight
+law51_sub7 = G(((direction == right | direction == left) & (PriorityNPCAhead | PriorityPedsAhead)) -> F[0, 2] (speed < 0.5));
+law51 = law51_sub3 & law51_sub4 & law51_sub5 & law51_sub6 & law51_sub7;
+
+
+//law52
+law52 = G((signalAhead == 0 & (PriorityNPCAhead | PriorityPedsAhead) & junctionAhead(1)) -> F[0, 2] (speed < 0.5));
+
+
+//law53
+law53 = G((isTrafficJam & (NPCAhead.speed < 0.5 | NPCAhead(0.5) | junctionAhead(1) ))-> F[0, 2] (speed < 0.5));
+
+//law57
+law57_sub1 = G(direction == left ->  turnSignal == left);
+law57_sub2 = G(direction == right ->  turnSignal == right);
+law57 = law57_sub1 & law57_sub2;
+
+//law58
+law58_sub1_1 = (~streetLightOn & (Time >= 20:00 | Time <= 7:00) ) | (rain >= 0.5 | fog >= 0.5 | snow >= 0.5);
+law58_sub1 = (law58_sub1_1 & ~NPCAhead(10))-> highBeamOn;
+law58_sub2 =  NPCAhead(10) -> ~highBeamOn;
+law58_sub3 = fog >= 0.5 -> (fogLightOn & warningFlashOn);
+law58 = G(law58_sub1 & law58_sub2 & law58_sub3);
+
+//law59
+law59_sub1 = (crosswalkAhead(5) | (signalAhead == 0 & junctionAhead(1)) ) & (Time >= 20:00 | Time <= 7:00);
+law59_sub2 = F[0,3](highBeamOn & (highBeamOn -> F[0,3](lowBeamOn)) ) | F[0,3](lowBeamOn & (lowBeamOn -> F[0,3](highBeamOn)) );
+law59 = G(law59_sub1 ->  law59_sub2);
+
+
+//law62
+law62 = G (~honkingAllowed ->  ~hornOn);
+
+
+trace |= law38 & law44 & law45 & law46 & law47 & law50 & law51 & law52 & law53 & law57 & law58 & law59 & law62; 
+          </code>
+        </pre>
+        </div>
+	 </div>
+	 </section>
+
+
+
+
+
+
+
+
+   
+   
+  
+
+    <script src="js/jquery.js"></script>
+    <script src="js/bootstrap.min.js"></script> 
+    <script src="js/mousescroll.js"></script>
+    <script src="js/smoothscroll.js"></script>
+    <script src="js/jquery.prettyPhoto.js"></script>
+    <script src="js/jquery.isotope.min.js"></script>
+    <script src="js/jquery.inview.min.js"></script>
+    <script src="js/wow.min.js"></script>
+    <script src="js/custom-scripts.js"></script>
+</body>
+</html>
